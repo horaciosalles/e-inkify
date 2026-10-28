@@ -142,7 +142,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
   var cv=$('cv'),ctx=cv.getContext('2d',{alpha:false});
   var lp=$('loupe'),lctx=lp.getContext('2d');
   var INK=0xFFFFFFFF,BG=0xFF000000; // ABGR little-endian: branco, preto
-  var OUT=INK,OUTH=0xFF949494;      // cor da tinta na saída e a mesma cor com 30% da luz
+  var OUT=INK,OUTH=0xFFA8A8A8;      // cor da tinta na saída e a mesma cor com 40% da luz
   var W=0,H=0,exact=false;
   var disp=null,d32=null;   // o que aparece na tela
   var src=null,s32=null;    // a imagem de origem, 1:1
@@ -373,8 +373,8 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
     $('vGrp').textContent=G+' px';
     RING=+$('ring').value;var w=2*RING+1;$('vRing').textContent=RING+' · '+(w*w-1);$('vThr2').textContent=fmt(thr2,2);
   }
-  // Meia-tinta = 30% da luz emitida, não 30% do valor: o canal sRGB vai a ~0,3^(1/2,2) ≈ 58%.
-  var AA_LIGHT=0.3;
+  // Meia-tinta = 40% da luz emitida, não 40% do valor: o canal sRGB vai a ~0,4^(1/2,2) ≈ 66%.
+  var AA_LIGHT=0.4;
   function setInk(){
     var h=$('ink').value,r=parseInt(h.substr(1,2),16),g=parseInt(h.substr(3,2),16),b=parseInt(h.substr(5,2),16);
     function half(c){return Math.round(255*Math.pow(Math.pow(c/255,2.2)*AA_LIGHT,1/2.2))}
