@@ -47,7 +47,11 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
 .ok{color:var(--ok)} .warn{color:var(--warn)}
 .stage{position:relative;flex:1 1 auto;min-height:120px;border:1px solid var(--line);border-radius:6px;overflow:hidden}
 #cv{display:block;width:100%;height:100%;touch-action:none;image-rendering:pixelated;cursor:crosshair;background:#000}
-.lwrap{position:absolute;right:8px;top:8px;width:min(384px,calc(100% - 16px));pointer-events:none}
+.lwrap{position:absolute;right:8px;top:8px;width:384px;pointer-events:none}
+.lbox{position:relative}
+.lgrip{position:absolute;left:0;bottom:0;width:24px;height:24px;pointer-events:auto;touch-action:none;cursor:nesw-resize;
+  border-left:3px solid var(--muted);border-bottom:3px solid var(--muted);border-bottom-left-radius:6px;box-sizing:border-box}
+.lgrip:hover,.lgrip:active{border-color:var(--accent)}
 #loupe{display:block;width:100%;aspect-ratio:1;border:1px solid var(--muted);border-radius:6px;background:#000;image-rendering:pixelated;box-sizing:border-box}
 .lcap{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:2px}
 </style>
@@ -122,7 +126,10 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
 
 <div class="stage">
   <canvas id="cv" aria-label="Canvas em pixels físicos"></canvas>
-  <div class="lwrap"><canvas id="loupe" aria-hidden="true"></canvas><div class="lcap">lupa 8× · toque para fixar</div></div>
+  <div class="lwrap" id="lwrap">
+    <div class="lbox"><canvas id="loupe" aria-hidden="true"></canvas><div class="lgrip" id="lgrip" title="Arraste para redimensionar a lupa"></div></div>
+    <div class="lcap">lupa 8× · toque para fixar</div>
+  </div>
 </div>
 
 <script>
@@ -135,7 +142,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
   var cv=$('cv'),ctx=cv.getContext('2d',{alpha:false});
   var lp=$('loupe'),lctx=lp.getContext('2d');
   var INK=0xFFFFFFFF,BG=0xFF000000; // ABGR little-endian: branco, preto
-  var OUT=INK,OUTH=0xFF939393;      // cor da tinta na saída e a mesma cor com 30% da luz
+  var OUT=INK,OUTH=0xFF949494;      // cor da tinta na saída e a mesma cor com 30% da luz
   var W=0,H=0,exact=false;
   var disp=null,d32=null;   // o que aparece na tela
   var src=null,s32=null;    // a imagem de origem, 1:1
@@ -264,7 +271,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
     var e=es[0],w,h;
     if(e.devicePixelContentBoxSize&&e.devicePixelContentBoxSize[0]){w=e.devicePixelContentBoxSize[0].inlineSize;h=e.devicePixelContentBoxSize[0].blockSize;exact=true}
     else{var d=window.devicePixelRatio||1;w=Math.round(e.contentRect.width*d);h=Math.round(e.contentRect.height*d);exact=false}
-    resize(w,h);status();
+    resize(w,h);status();sizeLoupe();
   });
   try{ro.observe(cv,{box:'device-pixel-content-box'})}catch(err){ro.observe(cv)}
 
@@ -341,6 +348,24 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
     var c=size/n;lctx.strokeStyle='rgba(255,64,64,.9)';lctx.lineWidth=Math.max(1,Math.round(d));
     lctx.strokeRect(Math.round(c*n/2),Math.round(c*n/2),Math.round(c),Math.round(c));
   }
+
+  // Tamanho da lupa em px do CSS: arrasta-se o canto inferior esquerdo (a lupa fica presa no canto superior direito).
+  var LSIZE=384;
+  try{var ls=+localStorage.getItem('lupa');if(ls>0)LSIZE=ls}catch(e){}
+  function sizeLoupe(){
+    var max=Math.max(96,cv.clientWidth-16);
+    $('lwrap').style.width=Math.round(Math.max(96,Math.min(LSIZE,max)))+'px';drawLoupe();
+  }
+  (function(){
+    var g=$('lgrip'),sx=0,sy=0,sw=0,on=false;
+    g.addEventListener('pointerdown',function(ev){on=true;sx=ev.clientX;sy=ev.clientY;sw=$('lwrap').offsetWidth;
+      try{g.setPointerCapture(ev.pointerId)}catch(e){}ev.preventDefault();ev.stopPropagation()});
+    g.addEventListener('pointermove',function(ev){if(!on)return;
+      var dx=sx-ev.clientX,dy=ev.clientY-sy; // esquerda ou baixo aumentam; vale o eixo que andou mais
+      LSIZE=Math.max(96,Math.min(sw+(Math.abs(dx)>Math.abs(dy)?dx:dy),cv.clientWidth-16));sizeLoupe()});
+    function end(){if(!on)return;on=false;try{localStorage.setItem('lupa',String(Math.round(LSIZE)))}catch(e){}}
+    g.addEventListener('pointerup',end);g.addEventListener('pointercancel',end);
+  })();
 
   /* ---------- controles ---------- */
   function readParams(){
