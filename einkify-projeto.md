@@ -183,6 +183,7 @@ Um filtro no compositor (SurfaceFlinger) resolveria tudo, mas não está dispon�
 
 ## 7. Artefatos
 
-- **Pixel Exato:** canvas 1:1 em pixels físicos com o Modo 2, parâmetros ajustáveis, inspeção por toque e lupa. Arquivo `index.html`.
+- **Leitor EPUB:** arquivo `index.html`. Abre EPUB 2 e 3 sem bibliotecas externas (zip pela `DecompressionStream` do navegador), extrai o texto de cada capítulo (parágrafos, títulos, citações, listas, itálico e negrito) e diagrama tudo num canvas em pixels físicos, uma página por tela, sem animação. Vira a página com deslize lateral, toque nas laterais ou setas do teclado; toque no centro mostra a barra (abrir, capítulos, modo noturno, ajustes). Ajustes de texto: fonte, tamanho, peso, entrelinha, largura da linha, margens, espaço entre parágrafos, recuo e justificação. Ajustes do modo noturno: cor da tinta, brilho (escala log, 0,2% a 100% da luz), grupo, anéis, contraste e AA diagonal, com prévia 1:1 ao vivo. Padrão noturno: grupo 1, 3 anéis, contraste 0,40, AA ligado. Guarda no aparelho os ajustes, o último livro e a posição de leitura.
+- **Pixel Exato:** canvas 1:1 em pixels físicos com o Modo 2, parâmetros ajustáveis, inspeção por toque e lupa. Arquivo `lab.html`, ligado a partir dos ajustes do leitor.
 - **E-inkify (calibrador):** prévia de leitura em luz mínima e gerador do favorito para o Chrome do Android.
 - **Nome:** "E-inkify". Antes de usar publicamente, vale pesquisar no INPI e na Play Store, por causa da marca "E Ink".
