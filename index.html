@@ -47,8 +47,9 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
 .ok{color:var(--ok)} .warn{color:var(--warn)}
 .stage{position:relative;flex:1 1 auto;min-height:120px;border:1px solid var(--line);border-radius:6px;overflow:hidden}
 #cv{display:block;width:100%;height:100%;touch-action:none;image-rendering:pixelated;cursor:crosshair;background:#000}
-#loupe{position:absolute;right:8px;top:8px;width:128px;height:128px;border:1px solid var(--muted);border-radius:6px;background:#000;image-rendering:pixelated;pointer-events:none}
-.lcap{position:absolute;right:8px;top:140px;font-family:var(--mono);font-size:10px;color:var(--muted);pointer-events:none;width:128px;text-align:center}
+.lwrap{position:absolute;right:8px;top:8px;width:min(384px,calc(100% - 16px));pointer-events:none}
+#loupe{display:block;width:100%;aspect-ratio:1;border:1px solid var(--muted);border-radius:6px;background:#000;image-rendering:pixelated;box-sizing:border-box}
+.lcap{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:2px}
 </style>
 
 <div class="bar">
@@ -68,19 +69,8 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
   </div>
 
   <div class="r">
-    <span class="lab">acende se</span>
-    <div class="seg" role="radiogroup" aria-label="Polaridade">
-      <input type="radio" name="pol" id="poAny" value="any" checked><label for="poAny">qualquer</label>
-      <input type="radio" name="pol" id="poBr" value="bright"><label for="poBr">mais claro</label>
-      <input type="radio" name="pol" id="poDk" value="dark"><label for="poDk">mais escuro</label>
-    </div>
     <div class="seg"><input type="checkbox" id="aa"><label for="aa">AA diagonal</label></div>
     <label class="lab" for="ink">tinta</label><input type="color" id="ink" value="#ffffff">
-    <span class="lab">score ÷</span>
-    <div class="seg" role="radiogroup" aria-label="Divisor do score">
-      <input type="radio" name="div" id="d768" value="768" checked><label for="d768">768</label>
-      <input type="radio" name="div" id="d765" value="765"><label for="d765">765</label>
-    </div>
   </div>
 
   <div class="r">
@@ -132,8 +122,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
 
 <div class="stage">
   <canvas id="cv" aria-label="Canvas em pixels físicos"></canvas>
-  <canvas id="loupe" aria-hidden="true"></canvas>
-  <div class="lcap">lupa 8×</div>
+  <div class="lwrap"><canvas id="loupe" aria-hidden="true"></canvas><div class="lcap">lupa 8× · toque para fixar</div></div>
 </div>
 
 <script>
@@ -154,7 +143,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
   var lx=-1,ly=-1;
 
   // parâmetros da regra
-  var div=768,G=1,thr2=0.2,pol='any',RING=1,aa=false;
+  var DIV=768,G=1,thr2=0.2,RING=1,aa=false; // score do pixel = (R+G+B)/768
   var bx=0,by=0,bs=new Float32Array(0),bval=new Float32Array(0),blit=new Uint8Array(0),litBlocks=0;
   var bout=new Uint8Array(0),outLit=0,outGrey=0; // saída final: 0 apagado, 1 aceso, 2 cinza
 
@@ -205,7 +194,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
   /* ---------- regra: grupo n×n contra a média dos vizinhos ---------- */
   function compute(){
     bx=Math.floor(W/G);by=Math.floor(H/G);
-    var n=bx*by,area=G*G*div,i,j,x,y;
+    var n=bx*by,area=G*G*DIV,i,j,x,y;
     bs=new Float32Array(n);bval=new Float32Array(n);blit=new Uint8Array(n);litBlocks=0;
     for(j=0;j<by;j++)for(i=0;i<bx;i++){var sum=0;
       for(y=0;y<G;y++){var row=(j*G+y)*W+i*G;
@@ -220,7 +209,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
       var cnt=(x1-x0+1)*(y1-y0+1)-1,val=0;
       if(cnt>0){
         var tot=integ[(y1+1)*iw+x1+1]-integ[y0*iw+x1+1]-integ[(y1+1)*iw+x0]+integ[y0*iw+x0];
-        var d=s-(tot-s)/cnt;val=pol==='bright'?d:pol==='dark'?-d:Math.abs(d);
+        val=s-(tot-s)/cnt; // só acende o grupo mais claro que a média dos vizinhos
       }
       bval[idx]=val;
       if(cnt>0&&val>thr2){blit[idx]=1;litBlocks++}
@@ -250,7 +239,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
       d32.fill(BG);
       for(j=0;j<by;j++)for(i=0;i<bx;i++){
         var c;
-        if(view==='grid'){var g=Math.min(255,Math.round(bs[j*bx+i]*div/3));c=0xFF000000|(g<<16)|(g<<8)|g}
+        if(view==='grid'){var g=Math.min(255,Math.round(bs[j*bx+i]*DIV/3));c=0xFF000000|(g<<16)|(g<<8)|g}
         else{var st=bout[j*bx+i];if(!st)continue;c=st===2?OUTH:OUT}
         for(y=0;y<G;y++){var row=(j*G+y)*W+i*G;for(x=0;x<G;x++)d32[row+x]=c}
       }
@@ -332,21 +321,23 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
   cv.addEventListener('pointermove',function(ev){
     var evs=(ev.getCoalescedEvents&&ev.getCoalescedEvents())||[];if(!evs.length)evs=[ev];
     var s=+radio('bs'),c=radio('tool')==='erase'?BG:INK;
+    // lupa e leitura ficam presas ao ponto tocado; só andam enquanto o dedo ou botão está pressionado
+    if(!drawing&&!inspecting)return;
     for(var k=0;k<evs.length;k++){var p=toDev(evs[k]);lx=p[0];ly=p[1];
       if(drawing){line(lastX,lastY,p[0],p[1],s,c);lastX=p[0];lastY=p[1]}}
-    if(drawing||inspecting||ev.pointerType==='mouse')readout(lx,ly);
+    readout(lx,ly);
     if(drawing)update();else drawLoupe();
   });
   function stop(){drawing=false;inspecting=false}
   cv.addEventListener('pointerup',stop);cv.addEventListener('pointercancel',stop);
 
-  /* ---------- lupa: 16×16 px físicos a 8× ---------- */
+  /* ---------- lupa: até 48×48 px físicos, cada um com 8 px do CSS ---------- */
   function drawLoupe(){
-    var d=window.devicePixelRatio||1,size=Math.round(128*d);
+    var d=window.devicePixelRatio||1,css=lp.parentNode.clientWidth||384,n=Math.max(2,Math.floor(css/16)*2),size=Math.round(css*d);
     if(lp.width!==size){lp.width=size;lp.height=size}
     lctx.imageSmoothingEnabled=false;lctx.fillStyle='#000';lctx.fillRect(0,0,size,size);
     if(!W)return;
-    var n=16,cx=lx<0?W>>1:lx,cy=ly<0?H>>1:ly;
+    var cx=lx<0?W>>1:lx,cy=ly<0?H>>1:ly;
     lctx.drawImage(cv,cx-n/2,cy-n/2,n,n,0,0,size,size);
     var c=size/n;lctx.strokeStyle='rgba(255,64,64,.9)';lctx.lineWidth=Math.max(1,Math.round(d));
     lctx.strokeRect(Math.round(c*n/2),Math.round(c*n/2),Math.round(c),Math.round(c));
@@ -354,7 +345,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
 
   /* ---------- controles ---------- */
   function readParams(){
-    div=+radio('div');G=+$('grp').value;thr2=+$('thr2').value;pol=radio('pol');aa=$('aa').checked;
+    G=+$('grp').value;thr2=+$('thr2').value;aa=$('aa').checked;
     $('vGrp').textContent=G+' px';
     RING=+$('ring').value;var w=2*RING+1;$('vRing').textContent=RING+' · '+(w*w-1);$('vThr2').textContent=fmt(thr2,2);
   }
@@ -366,7 +357,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
   }
   $('ink').addEventListener('input',function(){setInk();render()});
   ['grp','thr2','ring'].forEach(function(id){$(id).addEventListener('input',function(){readParams();update()})});
-  document.querySelectorAll('input[name=div],input[name=view],input[name=pol],#aa').forEach(function(e){e.addEventListener('change',function(){readParams();update()})});
+  document.querySelectorAll('input[name=view],#aa').forEach(function(e){e.addEventListener('change',function(){readParams();update()})});
   document.querySelectorAll('input[name=fit]').forEach(function(e){e.addEventListener('change',function(){if(srcKind==='photo'){paintSource();update()}})});
   $('tsize').addEventListener('input',function(){$('vts').textContent=this.value+' px'});
   $('bTest').addEventListener('click',function(){srcKind='test';paintSource();update()});

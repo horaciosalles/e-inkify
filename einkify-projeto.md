@@ -92,7 +92,7 @@ Canvas 1:1 com os pixels físicos do display. Um xadrez de 1 px aparece como cin
    | R | (2R+1)² | (2R+1)² − 1 |
 
 4. **Medida do contraste (Δ da média):** a diferença entre o grupo e a média dos vizinhos, equivalente a uma binarização adaptativa por média local, no estilo Bradley ou Sauvola. A opção *maior Δ* (gradiente morfológico) foi testada e removida.
-5. **Polaridade:** *qualquer* (valor absoluto), *mais claro* (só acende o lado claro de uma borda) ou *mais escuro*.
+5. **Polaridade fixa em "mais claro":** só acende o grupo mais claro que a média dos vizinhos, ou seja, o lado claro de uma borda. As opções *qualquer* e *mais escuro* foram testadas e removidas. O divisor do score também ficou fixo em 768.
 6. O grupo acende inteiro se o contraste for maior que o limiar.
 7. Nas bordas da tela entram só os vizinhos que existem. A sobra da tela que não forma um grupo completo fica apagada.
 8. **AA diagonal (opcional).** Uma passada 3×3 sobre o resultado, tratando cada grupo como um pixel. Com a vizinhança
@@ -114,7 +114,7 @@ Canvas 1:1 com os pixels físicos do display. Um xadrez de 1 px aparece como cin
 
 **Implementação no protótipo.** A média usa imagem integral. O resultado foi conferido contra uma contagem direta, vizinho a vizinho, em 200 combinações de parâmetros, sem nenhuma divergência.
 
-**Configuração inicial sugerida para texto:** grupo 1, anéis entre 3 e 5 (um pouco acima da espessura do traço) e polaridade "mais claro".
+**Configuração inicial sugerida para texto:** grupo 1 e anéis entre 3 e 5 (um pouco acima da espessura do traço).
 
 **Limitações conhecidas.**
 
@@ -183,6 +183,6 @@ Um filtro no compositor (SurfaceFlinger) resolveria tudo, mas não está dispon�
 
 ## 7. Artefatos
 
-- **Pixel Exato:** canvas 1:1 em pixels físicos com o Modo 2, parâmetros ajustáveis, inspeção por toque e lupa. Arquivo `pixel-exato.html`.
+- **Pixel Exato:** canvas 1:1 em pixels físicos com o Modo 2, parâmetros ajustáveis, inspeção por toque e lupa. Arquivo `index.html`.
 - **E-inkify (calibrador):** prévia de leitura em luz mínima e gerador do favorito para o Chrome do Android.
 - **Nome:** "E-inkify". Antes de usar publicamente, vale pesquisar no INPI e na Play Store, por causa da marca "E Ink".
