@@ -103,7 +103,7 @@ Canvas 1:1 com os pixels físicos do display. Um xadrez de 1 px aparece como cin
    G H I
    ```
 
-   um grupo aceso (`E`) continua aceso. Um grupo apagado recebe meia-tinta se `D` e `B` estiverem acesos com `A` apagado, ou `B` e `F` com `C` apagado, ou `F` e `H` com `I` apagado, ou `D` e `H` com `G` apagado. Exigir o canto apagado limita a meia-tinta aos degraus de traço fino e preserva cantos internos de áreas cheias e miolos de letras. A meia-tinta é a cor da tinta com metade da luz emitida (cada canal sRGB a cerca de 73%), e a cor da tinta é escolhida num seletor.
+   um grupo aceso (`E`) continua aceso. Um grupo apagado recebe meia-tinta se `D` e `B`, `B` e `F`, `F` e `H` ou `D` e `H` estiverem acesos. Os cantos `A`, `C`, `G` e `I` não entram na regra (exigir o canto apagado foi testado e revertido). A meia-tinta é a cor da tinta com 30% da luz emitida (cada canal sRGB a cerca de 58%), e a cor da tinta é escolhida num seletor.
 
 **Por que funciona melhor que o Modo 1.**
 

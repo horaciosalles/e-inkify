@@ -135,7 +135,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
   var cv=$('cv'),ctx=cv.getContext('2d',{alpha:false});
   var lp=$('loupe'),lctx=lp.getContext('2d');
   var INK=0xFFFFFFFF,BG=0xFF000000; // ABGR little-endian: branco, preto
-  var OUT=INK,OUTH=0xFFBABABA;      // cor da tinta na saída e a mesma cor com metade da luz
+  var OUT=INK,OUTH=0xFF939393;      // cor da tinta na saída e a mesma cor com 30% da luz
   var W=0,H=0,exact=false;
   var disp=null,d32=null;   // o que aparece na tela
   var src=null,s32=null;    // a imagem de origem, 1:1
@@ -219,8 +219,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
   /* ---------- AA diagonal: passada 3×3 sobre o resultado, um grupo = um pixel ---------- */
   //   A B C
   //   D E F    E aceso → continua aceso.
-  //   G H I    E apagado → meia-tinta se D+B (com A apagado), B+F (C apagado), F+H (I apagado) ou D+H (G apagado).
-  // O canto entre o par precisa estar apagado: assim só degraus de traço fino ganham meia-tinta, e não cantos internos de áreas cheias nem miolos de letras.
+  //   G H I    E apagado → meia-tinta se D+B, B+F, F+H ou D+H estiverem acesos. Os cantos A, C, G e I não entram.
   function antialias(){
     var n=bx*by,i,j;
     bout=new Uint8Array(n);outLit=litBlocks;outGrey=0;bout.set(blit);
@@ -228,7 +227,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
     for(j=0;j<by;j++)for(i=0;i<bx;i++){
       var o=j*bx+i;if(blit[o])continue;
       var B=j>0&&blit[o-bx],H=j<by-1&&blit[o+bx],D=i>0&&blit[o-1],F=i<bx-1&&blit[o+1];
-      if((D&&B&&!blit[o-bx-1])||(B&&F&&!blit[o-bx+1])||(F&&H&&!blit[o+bx+1])||(D&&H&&!blit[o+bx-1])){bout[o]=2;outGrey++}
+      if((D&&B)||(B&&F)||(F&&H)||(D&&H)){bout[o]=2;outGrey++}
     }
   }
   function render(){
@@ -286,7 +285,7 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
     var i=Math.floor(x/G),j=Math.floor(y/G);
     if(i>=bx||j>=by){$('sKind').textContent='fora da grade de grupos';return}
     var v=s32[y*W+x],r=v&255,g=(v>>>8)&255,b=(v>>>16)&255,k=j*bx+i;
-    $('sKind').textContent='grupo ('+i+', '+j+') score '+fmt(bs[k],3)+' · contraste com '+((2*RING+1)*(2*RING+1)-1)+' vizinhos '+fmt(bval[k],3)+' → '+(blit[k]?'aceso':'apagado')+(aa?' · AA → '+['apagado','aceso','meia-tinta (degrau de traço fino)'][bout[k]]:'')+' · pixel RGB '+r+','+g+','+b;
+    $('sKind').textContent='grupo ('+i+', '+j+') score '+fmt(bs[k],3)+' · contraste com '+((2*RING+1)*(2*RING+1)-1)+' vizinhos '+fmt(bval[k],3)+' → '+(blit[k]?'aceso':'apagado')+(aa?' · AA → '+['apagado','aceso','meia-tinta (canto entre vizinhos acesos)'][bout[k]]:'')+' · pixel RGB '+r+','+g+','+b;
   }
 
   /* ---------- desenho na imagem de origem ---------- */
@@ -349,10 +348,11 @@ input[type=color]{width:38px;height:31px;padding:3px;background:var(--panel);bor
     $('vGrp').textContent=G+' px';
     RING=+$('ring').value;var w=2*RING+1;$('vRing').textContent=RING+' · '+(w*w-1);$('vThr2').textContent=fmt(thr2,2);
   }
-  // Metade da luz emitida, não metade do valor: o canal sRGB vai a ~0,5^(1/2,2) ≈ 73%.
+  // Meia-tinta = 30% da luz emitida, não 30% do valor: o canal sRGB vai a ~0,3^(1/2,2) ≈ 58%.
+  var AA_LIGHT=0.3;
   function setInk(){
     var h=$('ink').value,r=parseInt(h.substr(1,2),16),g=parseInt(h.substr(3,2),16),b=parseInt(h.substr(5,2),16);
-    function half(c){return Math.round(255*Math.pow(Math.pow(c/255,2.2)*0.5,1/2.2))}
+    function half(c){return Math.round(255*Math.pow(Math.pow(c/255,2.2)*AA_LIGHT,1/2.2))}
     OUT=(0xFF000000|(b<<16)|(g<<8)|r)>>>0;OUTH=(0xFF000000|(half(b)<<16)|(half(g)<<8)|half(r))>>>0;
   }
   $('ink').addEventListener('input',function(){setInk();render()});
